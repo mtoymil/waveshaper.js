@@ -87,7 +87,7 @@
   drawAxis(wavePaper);
  
   // Make a function
-  var sine = SineMaker();
+  var sine = SineMaker(1);
   var sawtooth = SawtoothMaker();
   var triangle = TriangleMaker();
 
