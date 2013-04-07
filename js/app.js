@@ -34,6 +34,65 @@
     }
   }
 
+  var drawNGon = function(paper, n, o) {
+    if (n < 3)
+      return;
+
+    var vertices = [];
+    var angle = 2*Math.PI/n;
+    var x;
+    var y;
+
+    for (var i=0;i<n;i++) {
+      x = Math.cos(i*angle);  
+      y = Math.sin(i*angle);  
+      vertices.push([x,y]);
+    }
+
+    var r = paper.width/o.spScale;
+    var pathString = 'M'+ (o.spCenter[0]+(vertices[n-1][0]*r)) + ',' + (o.spCenter[1]+(vertices[n-1][1]*r));
+    for (var i=0;i<n;i++) {
+      pathString += 'L'+ (o.spCenter[0]+(vertices[i][0]*r)) + ',' + (o.spCenter[1]+(vertices[i][1]*r));
+    }
+    var shape = paper.path(pathString + 'z');
+    shape.attr('stroke', 'blue');
+    shape.attr('stroke-width', 2);
+    return shape;
+  }
+
+  var shapeToWave = function(shapePaper, wavePaper, shape, samples, o) {
+    var periodLength = wavePaper.width/o.wpXScale;
+    var yUnit = wavePaper.height/o.wpYScale;
+    var rUnit = shapePaper.height/o.spScale;
+    
+    var t = 0;
+    var th = 0;
+    var getY = function(th) {
+      var ps = "M" + o.wpCenter[0] + "," + o.wpCenter[1] + "l" + (2*rUnit*Math.cos(th)) + "," + (-2*rUnit*Math.sin(th));
+      var tempPath = shapePaper.path(ps);
+      var intersection = Raphael.pathIntersection(shape.getSubpath().end, tempPath.getSubpath().end);
+      tempPath.remove();
+      if (intersection.length) {
+        return intersection[0]['y'];
+      }
+      return -1;
+
+    };
+
+    var waveString = "M" + o.wpCenter[0] + "," + o.wpCenter[1];
+    for (var i=0; i<=samples; i++) {
+      t = i/samples;
+      th = t*2*Math.PI
+      var y = getY(th);
+      if (y<0)
+        continue;
+      waveString += "L" + (i*(periodLength/samples)+o.wpCenter[0]) + "," + y; 
+    }
+    var wave = wavePaper.path(waveString);
+    wave.attr("stroke", "blue");
+    wave.attr("stroke-width", "2");
+  }
+
   var drawCurve = function(waveFunction, samples, wavePaper, shapePaper, o) {
     var periodLength = wavePaper.width/o.wpXScale;
     var yUnit = wavePaper.height/o.wpYScale;
@@ -87,14 +146,18 @@
   drawAxis(wavePaper);
  
   // Make a function
-  var sine = SineMaker(1);
+  var sine = SineMaker();
   var sawtooth = SawtoothMaker();
   var triangle = TriangleMaker();
 
   // Draw curve
   //drawCurve(sawtooth, 150, wavePaper, shapePaper, setup);
-  drawCurve(sine, 150, wavePaper, shapePaper, setup);
+  //drawCurve(sine, 150, wavePaper, shapePaper, setup);
   //drawCurve(triangle, 150, wavePaper, shapePaper, setup);
+  
+  // Draw Shape
+  var shape = drawNGon(shapePaper, 3, setup);
+  shapeToWave(shapePaper, wavePaper, shape, 100, setup);
 
 
 
